@@ -1,4 +1,8 @@
 <?php
+
+function wc_cart_totals_subtotal_html() {
+	echo WC()->cart->get_cart_subtotal(); // WPCS: XSS ok.
+}
 /**
  * Order items HTML for meta box.
  *
@@ -31,27 +35,7 @@ if ( wc_tax_enabled() ) {
 				<th class="item_cost sortable" data-sort="float"><?php esc_html_e( 'Cost', 'woocommerce' ); ?></th>
 				<th class="quantity sortable" data-sort="int"><?php esc_html_e( 'Qty', 'woocommerce' ); ?></th>
 				<th class="line_cost sortable" data-sort="float"><?php esc_html_e( 'Total', 'woocommerce' ); ?></th>
-				<?php
-				if ( ! empty( $order_taxes ) ) :
-					foreach ( $order_taxes as $tax_id => $tax_item ) :
-						$tax_class      = wc_get_tax_class_by_tax_id( $tax_item['rate_id'] );
-						$tax_class_name = isset( $classes_options[ $tax_class ] ) ? $classes_options[ $tax_class ] : __( 'Tax', 'woocommerce' );
-						$column_label   = ! empty( $tax_item['label'] ) ? $tax_item['label'] : __( 'Tax', 'woocommerce' );
-						/* translators: %1$s: tax item name %2$s: tax class name  */
-						$column_tip = sprintf( esc_html__( '%1$s (%2$s)', 'woocommerce' ), $tax_item['name'], $tax_class_name );
-						?>
-						<th class="line_tax tips" data-tip="<?php echo esc_attr( $column_tip ); ?>">
-							<?php echo esc_attr( $column_label ); ?>
-							<input type="hidden" class="order-tax-id" name="order_taxes[<?php echo esc_attr( $tax_id ); ?>]" value="<?php echo esc_attr( $tax_item['rate_id'] ); ?>">
-							<?php if ( $order->is_editable() ) : ?>
-								<a class="delete-order-tax" href="#" data-rate_id="<?php echo esc_attr( $tax_id ); ?>"></a>
-							<?php endif; ?>
-						</th>
-						<?php
-					endforeach;
-				endif;
-				?>
-				<th class="wc-order-edit-line-item" width="1%">&nbsp;</th>
+				<!-- <th class="wc-order-edit-line-item" width="1%">&nbsp;</th> -->
 			</tr>
 		</thead>
 		<tbody id="order_line_items">
@@ -64,35 +48,6 @@ if ( wc_tax_enabled() ) {
 				do_action( 'woocommerce_order_item_' . $item->get_type() . '_html', $item_id, $item, $order );
 			}
 			do_action( 'woocommerce_admin_order_items_after_line_items', $order->get_id() );
-			?>
-		</tbody>
-		<tbody id="order_shipping_line_items">
-			<?php
-			$shipping_methods = WC()->shipping() ? WC()->shipping()->load_shipping_methods() : array();
-			foreach ( $line_items_shipping as $item_id => $item ) {
-				include 'html-order-shipping.php';
-			}
-			do_action( 'woocommerce_admin_order_items_after_shipping', $order->get_id() );
-			?>
-		</tbody>
-		<tbody id="order_fee_line_items">
-			<?php
-			foreach ( $line_items_fee as $item_id => $item ) {
-				include 'html-order-fee.php';
-			}
-			do_action( 'woocommerce_admin_order_items_after_fees', $order->get_id() );
-			?>
-		</tbody>
-		<tbody id="order_refunds">
-			<?php
-			$refunds = $order->get_refunds();
-
-			if ( $refunds ) {
-				foreach ( $refunds as $refund ) {
-					include 'html-order-refund.php';
-				}
-				do_action( 'woocommerce_admin_order_items_after_refunds', $order->get_id() );
-			}
 			?>
 		</tbody>
 	</table>
@@ -143,6 +98,15 @@ if ( wc_tax_enabled() ) {
 		</div>
 	<?php endif; ?>
 	<table class="wc-order-totals">
+	<?php?>
+			<tr>
+				<td class="label"><?php esc_html_e( 'Item(s) Subtotal:', 'woocommerce' ); ?></td>
+				<td width="1%"></td>
+				<td class="total">
+					<?php echo wc_price( $order->get_subtotal(), array( 'currency' => $order->get_currency() ) ); // WPCS: XSS ok. ?>
+				</td>
+			</tr>
+		<?php?>
 		<?php if ( 0 < $order->get_total_discount() ) : ?>
 			<tr>
 				<td class="label"><?php esc_html_e( 'Discount:', 'woocommerce' ); ?></td>
@@ -160,14 +124,7 @@ if ( wc_tax_enabled() ) {
 				<td class="label"><?php esc_html_e( 'Shipping:', 'woocommerce' ); ?></td>
 				<td width="1%"></td>
 				<td class="total">
-					<?php
-					$refunded = $order->get_total_shipping_refunded();
-					if ( $refunded > 0 ) {
-						echo '<del>' . wp_strip_all_tags( wc_price( $order->get_shipping_total(), array( 'currency' => $order->get_currency() ) ) ) . '</del> <ins>' . wc_price( $order->get_shipping_total() - $refunded, array( 'currency' => $order->get_currency() ) ) . '</ins>'; // WPCS: XSS ok.
-					} else {
-						echo wc_price( $order->get_shipping_total(), array( 'currency' => $order->get_currency() ) ); // WPCS: XSS ok.
-					}
-					?>
+					<?php echo wc_price( $order->get_shipping_total(), array( 'currency' => $order->get_currency() ) ); // WPCS: XSS ok.?>
 				</td>
 			</tr>
 		<?php endif; ?>
@@ -196,7 +153,7 @@ if ( wc_tax_enabled() ) {
 		<?php do_action( 'woocommerce_admin_order_totals_after_tax', $order->get_id() ); ?>
 
 		<tr>
-			<td class="label"><?php esc_html_e( 'Total', 'woocommerce' ); ?>:</td>
+			<td class="label"><?php esc_html_e( 'Order Total', 'woocommerce' ); ?>:</td>
 			<td width="1%"></td>
 			<td class="total">
 				<?php echo $order->get_formatted_order_total(); // WPCS: XSS ok. ?>
