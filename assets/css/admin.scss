@@ -1391,6 +1391,13 @@ ul.wc_coupon_list_block {
 			margin: 0 0 0 0.5em;
 			box-sizing: border-box;
 
+		.new-total {
+			font-size: 1em !important;
+			width: 10em;
+			margin: 0 0 0 0.5em;
+			box-sizing: border-box;
+			font-weight:bold !important;
+
 			input[type="text"] {
 				width: 96%;
 				float: right;
